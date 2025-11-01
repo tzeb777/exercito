@@ -7,56 +7,60 @@
   <title>Faça Parte</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="script.js"></script>
-</head>
+
+  <!-- 🔗 Script do Supabase -->
   <script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-  // 🔗 Conexão com seu projeto Supabase
-  const SUPABASE_URL = 'https://vwnzmmyoesrjqpthsstg.supabase.co'
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw'
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+    // Conexão com o Supabase
+    const SUPABASE_URL = 'https://vwnzmmyoesrjqpthsstg.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw'
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-  const form = document.getElementById('formInscricao')
-  const notifOverlay = document.getElementById('notifOverlay')
-  const notifClose = document.getElementById('notifClose')
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('formInscricao')
+      const notifOverlay = document.getElementById('notifOverlay')
+      const notifClose = document.getElementById('notifClose')
+      const motivoSelect = document.getElementById('motivo')
+      const campoMotivo = document.getElementById('campoMotivo')
 
-  // Mostrar/ocultar descrição quando "outros" for selecionado
-  const motivoSelect = document.getElementById('motivo')
-  const campoMotivo = document.getElementById('campoMotivo')
-  motivoSelect.addEventListener('change', () => {
-    campoMotivo.classList.toggle('d-none', motivoSelect.value !== 'outros')
-  })
+      // Mostrar/ocultar campo "outros"
+      motivoSelect.addEventListener('change', () => {
+        campoMotivo.classList.toggle('d-none', motivoSelect.value !== 'outros')
+      })
 
-  // Enviar dados pro Supabase
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault()
+      // Enviar dados para o Supabase
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
 
-    const dados = {
-      nome: document.getElementById('nome').value,
-      idade: document.getElementById('idade').value,
-      documento: document.getElementById('documento').value,
-      telefone: document.getElementById('telefone').value,
-      email: document.getElementById('email').value,
-      area: document.getElementById('area').value,
-      motivo: document.getElementById('motivo').value,
-      descricao: document.getElementById('descricao').value || ''
-    }
+        const dados = {
+          nome: document.getElementById('nome').value,
+          idade: document.getElementById('idade').value,
+          documento: document.getElementById('documento').value,
+          telefone: document.getElementById('telefone').value,
+          email: document.getElementById('email').value,
+          area: document.getElementById('area').value,
+          motivo: document.getElementById('motivo').value,
+          descricao: document.getElementById('descricao').value || ''
+        }
 
-    const { error } = await supabase.from('inscricoes').insert([dados])
+        const { error } = await supabase.from('inscricoes').insert([dados])
 
-    if (error) {
-      alert('Erro ao enviar: ' + error.message)
-      console.error(error)
-    } else {
-      notifOverlay.removeAttribute('aria-hidden')
-    }
-  })
+        if (error) {
+          alert('❌ Erro ao enviar: ' + error.message)
+          console.error(error)
+        } else {
+          notifOverlay.removeAttribute('aria-hidden')
+        }
+      })
 
-  notifClose.addEventListener('click', () => {
-    notifOverlay.setAttribute('aria-hidden', 'true')
-    form.reset()
-  })
-</script>
+      notifClose.addEventListener('click', () => {
+        notifOverlay.setAttribute('aria-hidden', 'true')
+        form.reset()
+      })
+    })
+  </script>
+</head>
 
 <body>
 
@@ -86,7 +90,6 @@
         <input id="telefone" placeholder="Telefone (IN-GAME)" required /><br>
         <input id="email" placeholder="E-mail (ID Discord)" required /><br>
 
-        <!-- NOVO CAMPO: Qual área -->
         <label for="area">Qual área?</label>
         <select id="area" required>
           <option value="">Selecione</option>
@@ -95,7 +98,6 @@
           <option value="marinha">Marinha do Brasil</option>
         </select>
 
-        <!-- Motivo -->
         <label for="motivo">Motivo</label>
         <select id="motivo" required>
           <option value="">Selecione</option>
@@ -118,7 +120,7 @@
   <div id="notifOverlay" class="notif-overlay" aria-hidden="true">
     <div class="notif-card">
       <img src="assets/logo.png" alt="logo">
-      <h4>Alistamento enviado!</h4>
+      <h4>✅ Alistamento enviado!</h4>
       <p>Seu pedido foi registrado com sucesso.</p>
       <button id="notifClose" class="btn-outline-success">Fechar</button>
     </div>
