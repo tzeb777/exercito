@@ -1,10 +1,36 @@
+// ========================
+// 🔍 MODO DEBUG ATIVADO
+// ========================
+window.onerror = function (msg, src, line, col, err) {
+  const div = document.createElement("div");
+  div.style.position = "fixed";
+  div.style.bottom = "10px";
+  div.style.left = "10px";
+  div.style.zIndex = "9999";
+  div.style.background = "#ffdddd";
+  div.style.border = "1px solid red";
+  div.style.padding = "10px";
+  div.style.fontFamily = "monospace";
+  div.textContent = "⚠️ Erro JS: " + msg;
+  document.body.appendChild(div);
+  console.error("Erro detectado:", msg, src, line, col, err);
+  return false;
+};
+
 // --- CONFIG SUPABASE ---
 const SUPABASE_URL = "https://vwnzmmyoesrjqpthsstg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+if (!window.supabase) {
+  alert("⚠️ Biblioteca Supabase não carregada! Verifique se o script do Supabase está incluído ANTES do script.js");
+}
+
+const supabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- DOM READY ---
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log("✅ script.js carregado com sucesso");
+
   const isAdmin = window.location.pathname.includes("admin");
   const statusTxt = document.getElementById("status");
   const cardsContainer = document.getElementById("cardsContainer");
@@ -13,8 +39,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnExcluir = document.getElementById("btnExcluir");
   const filtroArea = document.getElementById("filtroArea");
 
-  // ====== LOGIN / ENVIO DE INSCRIÇÃO ======
+  // --- TESTE DE CONEXÃO SUPABASE ---
+  try {
+    const { data, error } = await supabase.from("inscricoes").select("*").limit(1);
+    if (error) throw error;
+    console.log("🟢 Conexão com Supabase OK");
+  } catch (err) {
+    console.error("🔴 Falha na conexão com Supabase:", err);
+    alert("❌ Erro de conexão com Supabase: " + err.message);
+  }
+
+  // ====== FORM ENVIO ======
   if (form) {
+    console.log("🧾 Formulário detectado na página");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -33,7 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const { error } = await supabase.from("inscricoes").insert([data]);
         if (error) throw error;
-
         alert("✅ Inscrição enviada com sucesso!");
         form.reset();
       } catch (err) {
@@ -42,8 +78,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ====== ADMIN PAINEL ======
+  // ====== ADMIN ======
   if (isAdmin && statusTxt && cardsContainer) {
+    console.log("🛠️ Painel admin detectado");
+
     async function carregarInscricoes() {
       try {
         statusTxt.textContent = "Carregando dados...";
@@ -55,70 +93,25 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
 
-        statusTxt.textContent = `Total: ${data.length} registros.`;
+        statusTxt.textContent = `Total: ${data.length} registros`;
         cardsContainer.innerHTML = "";
 
         data.forEach((item) => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          card.innerHTML = `
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
             <h3>${item.nome}</h3>
-            <p><b>Idade:</b> ${item.idade}</p>
-            <p><b>Documento:</b> ${item.documento}</p>
-            <p><b>Telefone:</b> ${item.telefone}</p>
-            <p><b>Email:</b> ${item.email}</p>
             <p><b>Área:</b> ${item.area}</p>
-            <p><b>Motivo:</b> ${item.motivo}</p>
-            <p><b>Descrição:</b> ${item.descricao}</p>
+            <p><b>Email:</b> ${item.email}</p>
             <p><small>${new Date(item.enviadoEm).toLocaleString()}</small></p>
           `;
-          cardsContainer.appendChild(card);
+          cardsContainer.appendChild(div);
         });
       } catch (err) {
-        statusTxt.textContent = "Erro ao carregar: " + err.message;
+        statusTxt.textContent = "❌ Erro: " + err.message;
       }
     }
 
-    // Atualização em tempo real
-    const canal = supabase
-      .channel("tabela-inscricoes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "inscricoes" },
-        (payload) => {
-          console.log("Atualização detectada:", payload);
-          carregarInscricoes();
-        }
-      )
-      .subscribe();
-
-    // Carregar inicial
     await carregarInscricoes();
-
-    // Filtro por área
-    filtroArea?.addEventListener("change", async () => {
-      const valor = filtroArea.value;
-      let query = supabase.from("inscricoes").select("*");
-      if (valor !== "todos") query = query.eq("area", valor);
-      const { data } = await query;
-      cardsContainer.innerHTML = "";
-      data.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `<h3>${item.nome}</h3><p>${item.area}</p>`;
-        cardsContainer.appendChild(div);
-      });
-    });
-
-    // Botões
-    btnVoltar?.addEventListener("click", () => (window.location.href = "index.html"));
-    btnExcluir?.addEventListener("click", async () => {
-      if (confirm("Tem certeza que deseja excluir todas as inscrições?")) {
-        await supabase.from("inscricoes").delete().neq("id", 0);
-        alert("Registros excluídos!");
-        await carregarInscricoes();
-      }
-    });
   }
 });
