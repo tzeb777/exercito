@@ -1,96 +1,40 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exército Brasileiro</title><link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script type="module" src="script.js"></script></head><body>
-<nav class="navbar"><div class="brand"><img src="assets/logo.png" alt="logo"><span class="min">| Ministério da Defesa</span></div>
-<ul class="nav-links"><li><a class="nav-link active" href="index.html">Início</a></li><li><a class="nav-link" href="quem-somos.html">Quem Somos</a></li><li><a class="nav-link" href="operacoes.html">Operações</a></li><li><a class="nav-link" href="hierarquia.html">Hierarquia</a></li><li><a class="nav-link" href="faca-parte.html">Faça Parte</a></li></ul>
-<button id="btnEntrar" class="btn-outline-success">Painel Administrativo</button>
-<section class="banner">
-  <div class="banner-image"></div>
-
-  <div class="banner-content">
-    <h2>Serviço Militar</h2>
-    <p>
-      O Serviço Militar é obrigatório por Lei a todo brasileiro do <strong>sexo masculino</strong> e
-      voluntário para o <strong>sexo feminino</strong>. Os jovens devem se alistar no
-      <strong>ano em que completam 18 anos</strong> e podem servir na Marinha, Exército ou Aeronáutica.
-    </p>
-        <a href="faca-parte.html" target="_blank" class="banner-button">Alistamento Militar</a>
-  </div>
-</section>
-
-<div class="container">
-  <section class="header-title">
-    <h1>Exército Brasileiro — Braço Forte, Mão Amiga</h1>
-  </section>
-
-  <div class="card header-content">
-    <img src="assets/logo.png" class="carousel" alt="Símbolo do Exército Brasileiro">
-    <p class="slogan">“O difícil se faz agora, o impossível daqui a pouco!”</p>
-  </div>
-</div>
-
-<section class="info-section">
-  <div class="info-row">
-    <div class="info-card">
-      <img src="assets/missao1.png" alt="Missão do Exército">
-      <div class="info-text">
-        <h3>Missão</h3>
-        <p>
-          Garantir a soberania nacional, defender o território e contribuir para a paz e o desenvolvimento do país. 
-          O Exército Brasileiro atua com disciplina, coragem e comprometimento em todas as regiões do Brasil.
-        </p>
-      </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exército Brasileiro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Brasao_Exercito_Brasileiro.png" alt="logo">
+      <span>Ministério da Defesa</span>
     </div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="#">Quem Somos</a>
+      <a href="#">Operações</a>
+      <a href="#">Hierarquia</a>
+      <a href="faca-parte.html">Faça Parte</a>
+      <a href="admin.html" class="admin-btn">Painel Administrativo</a>
+    </nav>
+  </header>
 
-    <div class="info-card">
-      <img src="assets/foto1.png" alt="Operações e Treinamentos">
-      <div class="info-text">
-        <h3>Operações e Treinamentos</h3>
-        <p>
-          As tropas realizam treinamentos constantes, buscando a excelência operacional em missões de defesa, 
-          ajuda humanitária e segurança nacional. A preparação é o pilar da eficiência militar.
-        </p>
-      </div>
-    </div>
-  </div>
+  <main>
+    <section class="intro">
+      <h1>Exército Brasileiro<br>— Braço Forte, Mão Amiga</h1>
+    </section>
 
-  <div class="info-row">
-    <div class="info-card">
-      <img src="assets/foto4.png" alt="Tecnologia e Inovação">
-      <div class="info-text">
-        <h3>Tecnologia e Inovação</h3>
-        <p>
-          O Exército investe em inovação, modernização de equipamentos e tecnologias de ponta, 
-          fortalecendo a capacidade de resposta e a integração com outras forças de defesa.
-        </p>
-      </div>
-    </div>
+    <section class="operacoes">
+      <h2>Operações e Treinamentos</h2>
+      <p>As tropas realizam treinamentos constantes, buscando a excelência operacional em missões de defesa, ajuda humanitária e segurança nacional.</p>
+    </section>
+  </main>
 
-    <div class="info-card">
-      <img src="assets/foto5.png" alt="Ações Sociais">
-      <div class="info-text">
-        <h3>Ações Sociais</h3>
-        <p>
-          Além das operações militares, o Exército Brasileiro atua em ações sociais, 
-          apoio a comunidades e resposta a desastres, reforçando seu lema: “Braço Forte, Mão Amiga”.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- login popup (hidden by default) -->
-<div id="loginPopup" class="popup" aria-hidden="true">
-  <div class="box">
-    <h3>Login Admin</h3>
-    <input id="adminUser" placeholder="Usuário" />
-    <input id="adminPass" placeholder="Senha" type="password" />
-    <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
-      <button id="loginConfirm" class="btn-outline-success">Entrar</button>
-      <button id="loginClose" class="btn-outline-success">Fechar</button>
-    </div>
-  </div>
-</div>
-</body></html>
+  <footer>
+    <p>© Ministério da Defesa</p>
+  </footer>
+</body>
+</html>
