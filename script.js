@@ -1,8 +1,13 @@
-// Inicializa o Supabase
-const supabaseUrl = "https://vwnzmmyoesrjqpthsstg.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw";
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// ===========================================================
+// CONFIGURAÇÃO SUPABASE
+// ===========================================================
+const SUPABASE_URL = "https://vwnzmmyoesrjqpthsstg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ===========================================================
+// AO CARREGAR O SITE
+// ===========================================================
 document.addEventListener("DOMContentLoaded", function () {
   // ------------------------------
   // LOGIN ADMIN POPUP
@@ -12,12 +17,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const btnClose = document.getElementById("loginClose");
   const btnLoginConfirm = document.getElementById("loginConfirm");
 
-  if (btnEntrar && popup) {
-    btnEntrar.addEventListener("click", () => popup.classList.add("show"));
-  }
-  if (btnClose && popup) {
-    btnClose.addEventListener("click", () => popup.classList.remove("show"));
-  }
+  if (btnEntrar && popup) btnEntrar.addEventListener("click", () => popup.classList.add("show"));
+  if (btnClose && popup) btnClose.addEventListener("click", () => popup.classList.remove("show"));
+
   if (btnLoginConfirm) {
     btnLoginConfirm.addEventListener("click", () => {
       const u = document.getElementById("adminUser").value || "";
@@ -44,11 +46,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const notifClose = document.getElementById("notifClose");
     const areaSel = document.getElementById("area");
 
-    form.setAttribute("novalidate", "true");
-
     motivoSel.addEventListener("change", () => {
-      if (motivoSel.value === "outros")
-        campoMotivo.classList.remove("d-none");
+      if (motivoSel.value === "outros") campoMotivo.classList.remove("d-none");
       else campoMotivo.classList.add("d-none");
     });
 
@@ -64,18 +63,20 @@ document.addEventListener("DOMContentLoaded", function () {
         area: areaSel ? areaSel.value : "",
         motivo: motivoSel.value,
         descricao: document.getElementById("descricao").value.trim(),
-        enviado_em: new Date().toISOString(),
+        enviadoEm: new Date().toISOString(),
       };
 
       if (!data.nome || !data.documento || !data.email || !data.area) {
-        showAlert("Por favor, preencha todos os dados obrigatórios.");
+        showAlert("Por favor, preencha todos os campos obrigatórios.");
         return;
       }
 
+      // Enviar para o Supabase
       const { error } = await supabase.from("inscricoes").insert([data]);
+
       if (error) {
-        console.error("Erro ao enviar:", error);
-        showAlert("Erro ao enviar inscrição. Tente novamente.");
+        console.error(error);
+        showAlert("Erro ao enviar inscrição.");
         return;
       }
 
@@ -93,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // ------------------------------
-  // PÁGINA ADMIN
+  // PÁGINA ADMIN (LEITURA SUPABASE)
   // ------------------------------
   if (window.location.pathname.split("/").pop() === "admin.html") {
     if (sessionStorage.getItem("adminLogado") !== "true") {
@@ -104,25 +105,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const container = document.getElementById("cardsContainer");
     const filtro = document.getElementById("filtroArea");
+    const statusTxt = document.getElementById("status");
 
-    async function carregarDados(filtroSelecionado = "todos") {
-      const { data, error } = await supabase.from("inscricoes").select("*").order("id", { ascending: false });
+    async function carregarInscricoes() {
+      statusTxt.textContent = "Carregando registros...";
+      const { data, error } = await supabase
+        .from("inscricoes")
+        .select("*")
+        .order("enviadoEm", { ascending: false });
+
       if (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error(error);
+        statusTxt.textContent = "Erro ao carregar dados.";
         return;
       }
 
+      statusTxt.textContent = `Total: ${data.length} registros`;
+      renderCards(data);
+    }
+
+    function renderCards(dados) {
+      const filtroSel = filtro.value;
       container.innerHTML = "";
 
       const filtrados =
-        filtroSelecionado === "todos"
-          ? data
-          : data.filter(
-              (d) => (d.area || "").toLowerCase() === filtroSelecionado
-            );
+        filtroSel === "todos"
+          ? dados
+          : dados.filter((d) => (d.area || "").toLowerCase() === filtroSel);
 
       if (filtrados.length === 0) {
-        container.innerHTML = "<p class='text-muted'>Nenhum registro.</p>";
+        container.innerHTML = "<p class='text-muted'>Nenhum registro encontrado.</p>";
         return;
       }
 
@@ -135,96 +147,50 @@ document.addEventListener("DOMContentLoaded", function () {
           <p><b>ID:</b> ${escapeHtml(d.documento)}</p>
           <p><b>Tel:</b> ${escapeHtml(d.telefone)}</p>
           <p><b>Email:</b> ${escapeHtml(d.email)}</p>
-          <p><b>Onde quer servir:</b> ${escapeHtml(d.area || "Não informado")}</p>
+          <p><b>Área:</b> ${escapeHtml(d.area || "Não informado")}</p>
           <p><b>Motivo:</b> ${escapeHtml(d.motivo)} ${
-          d.descricao ? " - " + escapeHtml(d.descricao) : ""
+          d.descricao ? "- " + escapeHtml(d.descricao) : ""
         }</p>
           <p style="font-size:12px;color:#666"><b>Enviado:</b> ${new Date(
-            d.enviado_em
+            d.enviadoEm
           ).toLocaleString()}</p>
         `;
         container.appendChild(div);
       });
     }
 
-    carregarDados();
+    filtro.addEventListener("change", carregarInscricoes);
 
-    if (filtro) {
-      filtro.addEventListener("change", () => carregarDados(filtro.value));
-    }
+    document.getElementById("btnVoltar").addEventListener("click", () => {
+      sessionStorage.removeItem("adminLogado");
+      window.location.href = "index.html";
+    });
 
-    // ------------------------------
-    // REALTIME (atualização automática)
-    // ------------------------------
+    document.getElementById("btnExcluir").addEventListener("click", async () => {
+      if (!confirm("Deseja excluir todos os registros da tabela Supabase?")) return;
+      const { error } = await supabase.from("inscricoes").delete().neq("id", 0);
+      if (error) showAlert("Erro ao excluir registros.");
+      else {
+        showAlert("Todos os registros foram removidos!");
+        carregarInscricoes();
+      }
+    });
+
+    // Atualização em tempo real
     supabase
-      .channel("inscricoes-change")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "inscricoes" },
-        (payload) => {
-          console.log("Mudança detectada:", payload);
-          carregarDados(filtro ? filtro.value : "todos");
-        }
-      )
+      .channel("inscricoes_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "inscricoes" }, (payload) => {
+        console.log("Alteração detectada:", payload);
+        carregarInscricoes();
+      })
       .subscribe();
 
-    // ------------------------------
-    // EXPORTAR REGISTROS
-    // ------------------------------
-    const btnExcluir = document.getElementById("btnExcluir");
-    if (btnExcluir) {
-      btnExcluir.addEventListener("click", async () => {
-        const { data, error } = await supabase.from("inscricoes").select("*");
-        if (error || !data.length) {
-          showAlert("Nenhum registro para exportar.");
-          return;
-        }
-
-        const txt = data
-          .map((d) => {
-            return `Nome: ${d.nome || ""}
-Idade: ${d.idade || ""}
-
-ID: ${d.documento || ""}
-
-Tel: ${d.telefone || ""}
-
-Email: ${d.email || ""}
-
-Onde quer servir: ${d.area || "Não informado"}
-
-Motivo: ${d.motivo || ""}${d.descricao ? " - " + d.descricao : ""}
-
-Enviado: ${new Date(d.enviado_em).toLocaleString()}
-
-------------------------------`;
-          })
-          .join("\n\n");
-
-        const blob = new Blob([txt], { type: "text/plain" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "backup_inscricoes_" + new Date().toISOString().slice(0, 10) + ".txt";
-        a.click();
-
-        await supabase.from("inscricoes").delete().neq("id", 0);
-        showAlert("Registros exportados e excluídos com sucesso.");
-        carregarDados();
-      });
-    }
-
-    const btnVoltar = document.getElementById("btnVoltar");
-    if (btnVoltar) {
-      btnVoltar.addEventListener("click", () => {
-        sessionStorage.removeItem("adminLogado");
-        window.location.href = "index.html";
-      });
-    }
+    carregarInscricoes();
   }
 
-  // ------------------------------
-  // ESCAPE HTML
-  // ------------------------------
+  // ===========================================================
+  // PROTEÇÃO HTML / ALERTA PERSONALIZADO
+  // ===========================================================
   function escapeHtml(s) {
     return String(s || "").replace(/[&<>"']/g, (c) =>
       ({
@@ -236,28 +202,25 @@ Enviado: ${new Date(d.enviado_em).toLocaleString()}
       }[c])
     );
   }
+
+  function showAlert(message) {
+    const overlay = document.createElement("div");
+    overlay.className = "custom-alert";
+
+    const card = document.createElement("div");
+    card.className = "custom-alert-card";
+
+    const msg = document.createElement("p");
+    msg.textContent = message;
+
+    const btn = document.createElement("button");
+    btn.className = "btn-outline-success";
+    btn.textContent = "Fechar";
+    btn.onclick = () => overlay.remove();
+
+    card.appendChild(msg);
+    card.appendChild(btn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  }
 });
-
-// ------------------------------
-// ALERTA BONITO
-// ------------------------------
-function showAlert(message) {
-  const overlay = document.createElement("div");
-  overlay.className = "custom-alert";
-
-  const card = document.createElement("div");
-  card.className = "custom-alert-card";
-
-  const msg = document.createElement("p");
-  msg.textContent = message;
-
-  const btn = document.createElement("button");
-  btn.className = "btn-outline-success";
-  btn.textContent = "Fechar";
-  btn.onclick = () => overlay.remove();
-
-  card.appendChild(msg);
-  card.appendChild(btn);
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
-}
