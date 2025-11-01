@@ -1,170 +1,174 @@
-// ==========================
-// === CONFIG SUPABASE ===
-// ==========================
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+document.addEventListener('DOMContentLoaded', function() {
+  // ------------------------------
+  // LOGIN ADMIN POPUP
+  // ------------------------------
+  const btnEntrar = document.getElementById('btnEntrar');
+  const popup = document.getElementById('loginPopup');
+  const btnClose = document.getElementById('loginClose');
+  const btnLoginConfirm = document.getElementById('loginConfirm');
 
-const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-const SUPABASE_KEY = "YOUR-ANON-KEY";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (btnEntrar && popup) {
+    btnEntrar.addEventListener('click', () => popup.classList.add('show'));
+  }
 
-// ==========================
-// === FORMULÁRIO ENVIO ===
-// ==========================
-const form = document.querySelector("#formulario");
-if (form) {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  if (btnClose && popup) {
+    btnClose.addEventListener('click', () => popup.classList.remove('show'));
+  }
 
-    const data = {
-      nome: form.nome.value.trim(),
-      idade: form.idade.value.trim(),
-      cpf: form.cpf.value.trim(),
-      telefone: form.telefone.value.trim(),
-      area: form.area.value.trim(),
-      motivo: form.motivo.value.trim(),
-      observacao: form.observacao.value.trim(),
-      created_at: new Date().toISOString(),
-    };
+  if (btnLoginConfirm) {
+    btnLoginConfirm.addEventListener('click', () => {
+      const u = document.getElementById('adminUser').value || '';
+      const p = document.getElementById('adminPass').value || '';
 
-    if (!data.nome || !data.idade || !data.cpf || !data.telefone) {
-      showAlert("Por favor, preencha todos os campos obrigatórios.");
+      if (u === 'Admin' && p === '1822br') {
+        sessionStorage.setItem('adminLogado', 'true');
+        popup.classList.remove('show');
+        window.location.href = 'admin.html';
+      } else {
+        alert('Credenciais incorretas');
+      }
+    });
+  }
+
+  // ------------------------------
+  // FORMULÁRIO "FAÇA PARTE"
+  // ------------------------------
+  const form = document.getElementById('formInscricao');
+  if (form) {
+    const motivoSel = document.getElementById('motivo');
+    const campoMotivo = document.getElementById('campoMotivo');
+    const notif = document.getElementById('notifOverlay');
+    const notifClose = document.getElementById('notifClose');
+
+    motivoSel.addEventListener('change', () => {
+      if (motivoSel.value === 'outros')
+        campoMotivo.classList.remove('d-none');
+      else
+        campoMotivo.classList.add('d-none');
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const data = {
+        nome: document.getElementById('nome').value.trim(),
+        idade: document.getElementById('idade').value.trim(),
+        documento: document.getElementById('documento').value.trim(),
+        telefone: document.getElementById('telefone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        motivo: motivoSel.value,
+        descricao: document.getElementById('descricao').value.trim(),
+        enviadoEm: new Date().toISOString()
+      };
+
+      if (!data.nome || !data.documento || !data.email) {
+        alert('Por favor, preencha Nome, Documento e E-mail.');
+        return;
+      }
+
+      const arr = JSON.parse(localStorage.getItem('inscricoes') || '[]');
+      arr.push(data);
+      localStorage.setItem('inscricoes', JSON.stringify(arr));
+
+      if (notif) notif.classList.add('show');
+
+      form.reset();
+      campoMotivo.classList.add('d-none');
+    });
+
+    // Fechar notificação e voltar à página inicial
+    if (notifClose) {
+      notifClose.addEventListener('click', () => {
+        const notif = document.getElementById('notifOverlay');
+        notif.classList.remove('show');
+
+        // Garantia: redireciona mesmo se a animação não ocorrer
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 500);
+      });
+    }
+  }
+
+  // ------------------------------
+  // PÁGINA ADMIN
+  // ------------------------------
+  if (window.location.pathname.split('/').pop() === 'admin.html') {
+    if (sessionStorage.getItem('adminLogado') !== 'true') {
+      alert('Acesso restrito: faça login.');
+      window.location.href = 'index.html';
       return;
     }
 
-    const { error } = await supabase.from("formularios").insert([data]);
-    if (error) {
-      console.error(error);
-      showAlert("Erro ao enviar formulário.");
+    const container = document.getElementById('cardsContainer');
+    const dados = JSON.parse(localStorage.getItem('inscricoes') || '[]');
+    if (!container) return;
+
+    if (dados.length === 0) {
+      container.innerHTML = '<p class="text-muted">Nenhum registro.</p>';
     } else {
-      showNotification("Formulário enviado com sucesso!");
-      form.reset();
+      container.innerHTML = '';
+      dados.forEach((d) => {
+        const div = document.createElement('div');
+        div.className = 'admin-card';
+        div.innerHTML =
+          '<h5 style="color:#4b5320">' +
+          escapeHtml(d.nome) +
+          '</h5>' +
+          '<p><b>Idade:</b> ' + escapeHtml(d.idade) + '</p>' +
+          '<p><b>ID:</b> ' + escapeHtml(d.documento) + '</p>' +
+          '<p><b>Tel:</b> ' + escapeHtml(d.telefone) + '</p>' +
+          '<p><b>Email:</b> ' + escapeHtml(d.email) + '</p>' +
+          '<p><b>Motivo:</b> ' + escapeHtml(d.motivo) +
+          (d.descricao ? ' - ' + escapeHtml(d.descricao) : '') + '</p>' +
+          '<p style="font-size:12px;color:#666"><b>Enviado:</b> ' +
+          new Date(d.enviadoEm).toLocaleString() + '</p>';
+        container.appendChild(div);
+      });
     }
-  });
-}
 
-// ==========================
-// === LOGIN ADMIN ===
-// ==========================
-const loginBtn = document.querySelector("#loginBtn");
-const popup = document.querySelector("#loginPopup");
-const popupForm = document.querySelector("#loginForm");
-const adminPanel = document.querySelector("#adminPanel");
-
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "12345"; // 🔐 defina sua senha real aqui
-
-if (loginBtn) {
-  loginBtn.addEventListener("click", () => popup.classList.add("show"));
-}
-
-if (popupForm) {
-  popupForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const user = popupForm.querySelector("#user").value.trim();
-    const pass = popupForm.querySelector("#password").value.trim();
-
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
-      localStorage.setItem("isAdmin", "true");
-      popup.classList.remove("show");
-      showNotification("Login realizado com sucesso!");
-      loadAdminData();
-    } else {
-      showAlert("Usuário ou senha incorretos.");
+    const btnExcluir = document.getElementById('btnExcluir');
+    if (btnExcluir) {
+      btnExcluir.addEventListener('click', () => {
+        if (!confirm('Excluir todos os registros?')) return;
+        const all = localStorage.getItem('inscricoes') || '[]';
+        const blob = new Blob([all], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download =
+          'backup_inscricoes_' +
+          new Date().toISOString().slice(0, 10) +
+          '.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        localStorage.removeItem('inscricoes');
+        alert('Exportado e excluído.');
+        window.location.reload();
+      });
     }
-  });
-}
 
-// Impede acesso manual via localStorage
-window.addEventListener("DOMContentLoaded", () => {
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
-  if (adminPanel && isAdmin) {
-    loadAdminData();
-  } else if (adminPanel && !isAdmin) {
-    adminPanel.innerHTML = `<div class="form-error">⚠️ Acesso negado. Faça login primeiro.</div>`;
+    const btnVoltar = document.getElementById('btnVoltar');
+    if (btnVoltar) {
+      btnVoltar.addEventListener('click', () => {
+        sessionStorage.removeItem('adminLogado');
+        window.location.href = 'index.html';
+      });
+    }
+  }
+
+  // ------------------------------
+  // FUNÇÃO DE SEGURANÇA
+  // ------------------------------
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[c])
+    );
   }
 });
-
-// ==========================
-// === ADMIN PANEL ===
-// ==========================
-async function loadAdminData() {
-  if (!adminPanel) return;
-  const { data, error } = await supabase.from("formularios").select("*").order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    adminPanel.innerHTML = "<p>Erro ao carregar dados.</p>";
-    return;
-  }
-
-  if (!data.length) {
-    adminPanel.innerHTML = "<p>Nenhum formulário encontrado.</p>";
-    return;
-  }
-
-  adminPanel.innerHTML = `
-    <h3>📋 Formulários Recebidos</h3>
-    <div class="cards-grid">
-      ${data.map(item => `
-        <div class="admin-card">
-          <p><b>Nome:</b> ${item.nome}</p>
-          <p><b>Idade:</b> ${item.idade}</p>
-          <p><b>CPF:</b> ${item.cpf}</p>
-          <p><b>Telefone:</b> ${item.telefone}</p>
-          <p><b>Área:</b> ${item.area}</p>
-          <p><b>Motivo:</b> ${item.motivo}</p>
-          <p><b>Data:</b> ${new Date(item.created_at).toLocaleString()}</p>
-          <button class="btn-outline-success delete-btn" data-id="${item.id}">Apagar</button>
-        </div>
-      `).join("")}
-    </div>
-  `;
-
-  // Adiciona listeners de exclusão
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      const confirmDel = confirm("Deseja realmente apagar este formulário?");
-      if (!confirmDel) return;
-
-      const { error } = await supabase.from("formularios").delete().eq("id", id);
-      if (error) {
-        showAlert("Erro ao apagar registro.");
-      } else {
-        showNotification("Registro apagado com sucesso!");
-        loadAdminData();
-      }
-    });
-  });
-}
-
-// ==========================
-// === NOTIFICAÇÕES ===
-// ==========================
-function showNotification(msg) {
-  let overlay = document.createElement("div");
-  overlay.className = "notif-overlay show";
-  overlay.innerHTML = `
-    <div class="notif-card">
-      <img src="https://cdn-icons-png.flaticon.com/512/845/845646.png" alt="check" />
-      <h4>Sucesso!</h4>
-      <p>${msg}</p>
-      <button id="notifClose">Fechar</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  overlay.querySelector("#notifClose").addEventListener("click", () => overlay.remove());
-}
-
-function showAlert(msg) {
-  let alert = document.createElement("div");
-  alert.className = "custom-alert";
-  alert.innerHTML = `
-    <div class="custom-alert-card">
-      <p>${msg}</p>
-      <button class="btn-outline-success" id="alertClose">Fechar</button>
-    </div>
-  `;
-  document.body.appendChild(alert);
-  alert.querySelector("#alertClose").addEventListener("click", () => alert.remove());
-}
