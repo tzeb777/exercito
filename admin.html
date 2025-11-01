@@ -4,28 +4,29 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="assets/logo.png">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin • Painel</title>
+  <title>Admin</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="admin.js"></script>
+  <!-- Adicione o client do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
   <div style="padding:14px;background:#fff;display:flex;gap:10px;align-items:center;justify-content:flex-start">
     <button id="btnVoltar" class="btn-outline-success">Voltar</button>
     <button id="btnExcluir" class="btn-outline-success" style="background:#d9534f;color:#fff">Excluir</button>
 
-    <!-- 🔽 Filtro -->
     <select id="filtroArea" class="btn-outline-success" style="margin-left:auto">
       <option value="todos">TODOS</option>
       <option value="exercito">EXÉRCITO</option>
-      <option value="fab">FORÇA AÉREA</option>
       <option value="marinha">MARINHA</option>
+      <option value="fab">FORÇA AÉREA</option>
     </select>
   </div>
 
   <main class="container">
     <h2>Painel Administrativo</h2>
-    <p id="status" class="text-muted">Carregando dados...</p>
+    <!-- 🔽 ADICIONE ESTA LINHA -->
+    <p id="status" style="color:#555">Carregando dados...</p>
     <div id="cardsContainer" class="cards-grid"></div>
   </main>
 </body>
