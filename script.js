@@ -1,174 +1,144 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // ------------------------------
-  // LOGIN ADMIN POPUP
-  // ------------------------------
-  const btnEntrar = document.getElementById('btnEntrar');
-  const popup = document.getElementById('loginPopup');
-  const btnClose = document.getElementById('loginClose');
-  const btnLoginConfirm = document.getElementById('loginConfirm');
+// ======= CONFIGURAÇÃO SUPABASE =======
+const SUPABASE_URL = "https://vwnzmmyoesrjqpthsstg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bnptbXlvZXNyanFwdGhzc3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NTIyMTAsImV4cCI6MjA3NzUyODIxMH0.F6z3GoZbC-htwzOZSlOnwZUbVOSbgCSbeFE1qskQihw";
 
-  if (btnEntrar && popup) {
-    btnEntrar.addEventListener('click', () => popup.classList.add('show'));
-  }
+let supabaseClient;
+(async () => {
+  const { createClient } = window.supabase;
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+})();
 
-  if (btnClose && popup) {
-    btnClose.addEventListener('click', () => popup.classList.remove('show'));
-  }
-
-  if (btnLoginConfirm) {
-    btnLoginConfirm.addEventListener('click', () => {
-      const u = document.getElementById('adminUser').value || '';
-      const p = document.getElementById('adminPass').value || '';
-
-      if (u === 'Admin' && p === '1822br') {
-        sessionStorage.setItem('adminLogado', 'true');
-        popup.classList.remove('show');
-        window.location.href = 'admin.html';
+// ======= LOGIN ADMIN =======
+document.addEventListener("DOMContentLoaded", () => {
+  const btnEntrar = document.getElementById("btnEntrar");
+  if (btnEntrar) {
+    btnEntrar.addEventListener("click", () => {
+      const senha = prompt("Digite a senha de administrador:");
+      if (senha === "1822br") {
+        localStorage.setItem("adminLogado", "true");
+        window.location.href = "admin.html";
       } else {
-        alert('Credenciais incorretas');
+        alert("Senha incorreta!");
       }
     });
   }
 
-  // ------------------------------
-  // FORMULÁRIO "FAÇA PARTE"
-  // ------------------------------
-  const form = document.getElementById('formInscricao');
-  if (form) {
-    const motivoSel = document.getElementById('motivo');
-    const campoMotivo = document.getElementById('campoMotivo');
-    const notif = document.getElementById('notifOverlay');
-    const notifClose = document.getElementById('notifClose');
+  if (window.location.pathname.includes("admin.html")) {
+    if (localStorage.getItem("adminLogado") !== "true") {
+      alert("Acesso negado. Faça login primeiro!");
+      window.location.href = "index.html";
+      return;
+    }
+    carregarInscricoes();
+  }
 
-    motivoSel.addEventListener('change', () => {
-      if (motivoSel.value === 'outros')
-        campoMotivo.classList.remove('d-none');
-      else
-        campoMotivo.classList.add('d-none');
-    });
+  const btnVoltar = document.getElementById("btnVoltar");
+  if (btnVoltar) btnVoltar.addEventListener("click", () => {
+    localStorage.removeItem("adminLogado");
+    window.location.href = "index.html";
+  });
+});
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+// ======= FORMULÁRIO DE INSCRIÇÃO =======
+document.addEventListener("submit", async (e) => {
+  const form = document.getElementById("formInscricao");
+  if (e.target === form) {
+    e.preventDefault();
 
-      const data = {
-        nome: document.getElementById('nome').value.trim(),
-        idade: document.getElementById('idade').value.trim(),
-        documento: document.getElementById('documento').value.trim(),
-        telefone: document.getElementById('telefone').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        motivo: motivoSel.value,
-        descricao: document.getElementById('descricao').value.trim(),
-        enviadoEm: new Date().toISOString()
-      };
+    const nome = document.getElementById("nome").value;
+    const idade = document.getElementById("idade").value;
+    const documento = document.getElementById("documento").value;
+    const telefone = document.getElementById("telefone").value;
+    const email = document.getElementById("email").value;
+    const area = document.getElementById("area").value;
+    const motivo = document.getElementById("motivo").value;
+    const descricao = document.getElementById("descricao").value;
 
-      if (!data.nome || !data.documento || !data.email) {
-        alert('Por favor, preencha Nome, Documento e E-mail.');
-        return;
-      }
+    try {
+      const { data, error } = await supabaseClient
+        .from("inscricoes")
+        .insert([{ nome, idade, documento, telefone, email, area, motivo, descricao }]);
 
-      const arr = JSON.parse(localStorage.getItem('inscricoes') || '[]');
-      arr.push(data);
-      localStorage.setItem('inscricoes', JSON.stringify(arr));
+      if (error) throw error;
 
-      if (notif) notif.classList.add('show');
-
+      document.getElementById("notifOverlay").style.display = "flex";
       form.reset();
-      campoMotivo.classList.add('d-none');
-    });
-
-    // Fechar notificação e voltar à página inicial
-    if (notifClose) {
-      notifClose.addEventListener('click', () => {
-        const notif = document.getElementById('notifOverlay');
-        notif.classList.remove('show');
-
-        // Garantia: redireciona mesmo se a animação não ocorrer
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 500);
-      });
+    } catch (err) {
+      console.error("Erro ao enviar:", err);
+      alert("Erro ao enviar inscrição!");
     }
   }
+});
 
-  // ------------------------------
-  // PÁGINA ADMIN
-  // ------------------------------
-  if (window.location.pathname.split('/').pop() === 'admin.html') {
-    if (sessionStorage.getItem('adminLogado') !== 'true') {
-      alert('Acesso restrito: faça login.');
-      window.location.href = 'index.html';
+// Fechar notificação
+document.addEventListener("click", (e) => {
+  if (e.target.id === "notifClose") {
+    document.getElementById("notifOverlay").style.display = "none";
+  }
+});
+
+// ======= CARREGAR INSCRIÇÕES NO ADMIN =======
+async function carregarInscricoes() {
+  const cardsContainer = document.getElementById("cardsContainer");
+  if (!cardsContainer) return;
+
+  cardsContainer.innerHTML = "<p>Carregando inscrições...</p>";
+
+  const { data, error } = await supabaseClient.from("inscricoes").select("*");
+  if (error) {
+    cardsContainer.innerHTML = "<p>Erro ao carregar dados!</p>";
+    console.error(error);
+    return;
+  }
+
+  if (!data.length) {
+    cardsContainer.innerHTML = "<p>Nenhuma inscrição encontrada.</p>";
+    return;
+  }
+
+  renderizarCards(data);
+}
+
+// ======= RENDERIZAÇÃO =======
+function renderizarCards(inscricoes) {
+  const cardsContainer = document.getElementById("cardsContainer");
+  cardsContainer.innerHTML = "";
+
+  inscricoes.forEach((item) => {
+    const card = document.createElement("div");
+    card.classList.add("card-inscricao");
+    card.innerHTML = `
+      <input type="checkbox" class="chkExcluir" data-id="${item.id}">
+      <h3>${item.nome}</h3>
+      <p><b>Idade:</b> ${item.idade}</p>
+      <p><b>Documento:</b> ${item.documento}</p>
+      <p><b>Telefone:</b> ${item.telefone}</p>
+      <p><b>Email:</b> ${item.email}</p>
+      <p><b>Área:</b> ${item.area}</p>
+      <p><b>Motivo:</b> ${item.motivo}</p>
+      ${item.descricao ? `<p><b>Descrição:</b> ${item.descricao}</p>` : ""}
+    `;
+    cardsContainer.appendChild(card);
+  });
+}
+
+// ======= EXCLUSÃO SELECIONADA =======
+document.addEventListener("click", async (e) => {
+  if (e.target.id === "btnExcluirSelecionados") {
+    const checks = document.querySelectorAll(".chkExcluir:checked");
+    if (!checks.length) return alert("Selecione pelo menos uma inscrição para excluir!");
+
+    const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+    if (!confirm(`Deseja excluir ${ids.length} inscrição(ões)?`)) return;
+
+    const { error } = await supabaseClient.from("inscricoes").delete().in("id", ids);
+    if (error) {
+      alert("Erro ao excluir!");
+      console.error(error);
       return;
     }
 
-    const container = document.getElementById('cardsContainer');
-    const dados = JSON.parse(localStorage.getItem('inscricoes') || '[]');
-    if (!container) return;
-
-    if (dados.length === 0) {
-      container.innerHTML = '<p class="text-muted">Nenhum registro.</p>';
-    } else {
-      container.innerHTML = '';
-      dados.forEach((d) => {
-        const div = document.createElement('div');
-        div.className = 'admin-card';
-        div.innerHTML =
-          '<h5 style="color:#4b5320">' +
-          escapeHtml(d.nome) +
-          '</h5>' +
-          '<p><b>Idade:</b> ' + escapeHtml(d.idade) + '</p>' +
-          '<p><b>ID:</b> ' + escapeHtml(d.documento) + '</p>' +
-          '<p><b>Tel:</b> ' + escapeHtml(d.telefone) + '</p>' +
-          '<p><b>Email:</b> ' + escapeHtml(d.email) + '</p>' +
-          '<p><b>Motivo:</b> ' + escapeHtml(d.motivo) +
-          (d.descricao ? ' - ' + escapeHtml(d.descricao) : '') + '</p>' +
-          '<p style="font-size:12px;color:#666"><b>Enviado:</b> ' +
-          new Date(d.enviadoEm).toLocaleString() + '</p>';
-        container.appendChild(div);
-      });
-    }
-
-    const btnExcluir = document.getElementById('btnExcluir');
-    if (btnExcluir) {
-      btnExcluir.addEventListener('click', () => {
-        if (!confirm('Excluir todos os registros?')) return;
-        const all = localStorage.getItem('inscricoes') || '[]';
-        const blob = new Blob([all], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download =
-          'backup_inscricoes_' +
-          new Date().toISOString().slice(0, 10) +
-          '.txt';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        localStorage.removeItem('inscricoes');
-        alert('Exportado e excluído.');
-        window.location.reload();
-      });
-    }
-
-    const btnVoltar = document.getElementById('btnVoltar');
-    if (btnVoltar) {
-      btnVoltar.addEventListener('click', () => {
-        sessionStorage.removeItem('adminLogado');
-        window.location.href = 'index.html';
-      });
-    }
-  }
-
-  // ------------------------------
-  // FUNÇÃO DE SEGURANÇA
-  // ------------------------------
-  function escapeHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, (c) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      }[c])
-    );
+    alert("Inscrição(ões) excluída(s) com sucesso!");
+    carregarInscricoes();
   }
 });
