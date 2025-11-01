@@ -1,29 +1,41 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <link rel="icon" type="image/png" href="assets/logo.png">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Painel Administrativo</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Administrativo • Ministério da Defesa</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script defer src="script.js"></script>
 </head>
 <body>
-  <div style="padding:14px;background:#fff;display:flex;gap:10px;align-items:center;justify-content:flex-start">
-    <button id="btnVoltar" class="btn-outline-success">Voltar</button>
-    <button id="btnExcluirSelecionados" class="btn-outline-success" style="background:#d9534f;color:#fff">Excluir Selecionados</button>
+  <header>
+    <div class="logo-area">
+      <img src="logo.png" alt="Logo Ministério da Defesa" class="logo" />
+      <h1>Administração</h1>
+    </div>
+    <button id="btnVoltar">Sair</button>
+  </header>
 
-    <select id="filtroArea" class="btn-outline-success" style="margin-left:auto">
-      <option value="todos">TODOS</option>
-      <option value="exercito">EXÉRCITO</option>
-      <option value="marinha">MARINHA</option>
-      <option value="fab">FORÇA AÉREA</option>
-    </select>
-  </div>
-
-  <main class="container">
-    <h2>Painel Administrativo</h2>
-    <div id="cardsContainer" class="cards-grid"></div>
+  <main>
+    <h2>Inscrições Recebidas</h2>
+    <table id="tabelaInscricoes">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Idade</th>
+          <th>Documento</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Área</th>
+          <th>Motivo</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaCorpo">
+        <tr><td colspan="8">Carregando...</td></tr>
+      </tbody>
+    </table>
   </main>
 </body>
 </html>
