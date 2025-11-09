@@ -298,7 +298,6 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
 
 // === CARROSSEL ROBUSTO PARA operacoes.html ===
 (function initOperacoesCarousel() {
-  // espera DOM
   document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.querySelector('.operacoes-page .carousel');
     if (!carousel) {
@@ -312,38 +311,32 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       return;
     }
 
-    // busca botões com mais tolerância (caso IDs duplicados, attach em todos)
     const prevBtn = document.getElementById('prevBtn') || document.querySelector('.carousel-btn.left');
+    // pega todos os next possíveis (tolerância a duplicados)
     const nextBtns = Array.from(document.querySelectorAll('#nextBtn')).length
       ? Array.from(document.querySelectorAll('#nextBtn'))
       : Array.from(document.querySelectorAll('.carousel-btn.right'));
-
     const indicatorsWrapper = document.querySelector('.carousel-indicators');
 
-    // compute gap between cards
     function getGap() {
       const s = getComputedStyle(carousel);
-      const gap = parseInt(s.gap || s.columnGap || 20, 10);
-      return isNaN(gap) ? 20 : gap;
+      const gap = parseInt(s.gap || s.columnGap || 18, 10);
+      return isNaN(gap) ? 18 : gap;
     }
 
-    // card width (assume all same)
     function cardWidth() {
-      return cards[0].offsetWidth;
+      return cards[0].offsetWidth || 320;
     }
 
     function cardWidthWithGap() {
       return cardWidth() + getGap();
     }
 
-    // compute per page based on available width
     function perPageCount() {
       const parentW = carousel.parentElement.clientWidth;
       const cw = cardWidthWithGap();
-      // safeguard: if cw is 0 (imgs not loaded) return 1
       if (!cw || cw <= 0) return 1;
-      const per = Math.max(1, Math.floor(parentW / cw));
-      return per;
+      return Math.max(1, Math.floor(parentW / cw));
     }
 
     let currentPage = 0;
@@ -352,7 +345,6 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       return Math.max(1, Math.ceil(cards.length / per));
     }
 
-    // build / update dots
     function rebuildDots() {
       if (!indicatorsWrapper) return;
       const pages = pagesCount();
@@ -383,26 +375,21 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
     }
 
     function scrollToPage(animate = true) {
-      // calculate offset in px
       const per = perPageCount();
       const translate = currentPage * per * cardWidthWithGap();
-      // apply transform
       carousel.style.transition = animate ? 'transform 0.45s ease' : 'none';
       carousel.style.transform = `translateX(-${translate}px)`;
 
-      // update dots
+      if (prevBtn) prevBtn.disabled = currentPage <= 0;
+      nextBtns.forEach(nb => nb.disabled = currentPage >= pagesCount() - 1);
+
       if (indicatorsWrapper) {
         Array.from(indicatorsWrapper.children).forEach((el, i) => {
           el.classList.toggle('active', i === currentPage);
         });
       }
-
-      // enable/disable prev/next if you want (optional)
-      if (prevBtn) prevBtn.disabled = currentPage <= 0;
-      nextBtns.forEach(nb => nb.disabled = currentPage >= pagesCount() - 1);
     }
 
-    // attach button handlers (prev once, next for all found)
     if (prevBtn) {
       prevBtn.addEventListener('click', () => {
         currentPage = clampPage(currentPage - 1);
@@ -419,7 +406,6 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       });
     }
 
-    // support keyboard
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') {
         currentPage = clampPage(currentPage - 1);
@@ -430,7 +416,6 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       }
     });
 
-    // touch swipe
     (function addTouch() {
       let startX = 0, delta = 0, touching = false;
       carousel.addEventListener('touchstart', (ev) => {
@@ -438,14 +423,15 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
         startX = ev.touches[0].clientX;
         carousel.style.transition = 'none';
       }, { passive: true });
+
       carousel.addEventListener('touchmove', (ev) => {
         if (!touching) return;
         delta = ev.touches[0].clientX - startX;
-        // temporary translate for swipe feel
         const per = perPageCount();
         const base = currentPage * per * cardWidthWithGap();
         carousel.style.transform = `translateX(-${base - delta}px)`;
       }, { passive: true });
+
       carousel.addEventListener('touchend', () => {
         touching = false;
         if (Math.abs(delta) > 50) {
@@ -457,16 +443,13 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       });
     })();
 
-    // reflow on resize and when images load
     let initDone = false;
     function recompute(animate = false) {
-      // ensure currentPage in bounds
       currentPage = clampPage(currentPage);
       rebuildDots();
       scrollToPage(!animate);
     }
 
-    // Wait images load, then init
     const imgs = carousel.querySelectorAll('img');
     let imgsToLoad = imgs.length;
     if (imgsToLoad === 0) {
@@ -490,20 +473,16 @@ Enviado: ${d.enviado_em ? new Date(d.enviado_em).toLocaleString() : ''}
       });
     }
 
-    // on resize, recalc perPage and pages
     let rTO;
     window.addEventListener('resize', () => {
       clearTimeout(rTO);
       rTO = setTimeout(() => {
-        // keep same visible content if possible
         recompute(true);
       }, 80);
     });
 
-    // initial build
     rebuildDots();
     scrollToPage(false);
-
     console.log('[CAROUSEL] inicializado — cards:', cards.length, 'pages:', pagesCount());
   });
 })();
